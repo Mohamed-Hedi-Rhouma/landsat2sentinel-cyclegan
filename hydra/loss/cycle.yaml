@@ -1,0 +1,20 @@
+# @package _global_
+loss:
+  name: 'cycle'
+  model:
+    _target_: cyclegan.model.loss.CycleLoss
+    stats_dir: ${location.stats_dir}      # sam and metrics work on reflectance
+
+    # weights, 0 = off
+    lambda_gan: 1.0                       # look like the other sensor
+    lambda_cycle: 10.0                    # round trip gives the input back
+    lambda_lpips: 1.0                     # round trip keeps the textures
+    lambda_sam: 0.0                       # round trip keeps the band ratios
+    lambda_consistency_l2s: 1.0           # fake sentinel seen by landsat = real landsat
+    lambda_consistency_s2l: 0.0           # fake landsat = real sentinel seen by landsat
+
+    gan_type: 'lsgan'                     # 'lsgan' or 'relativistic'
+    reconstruction: 'huber'               # 'huber' or 'l1', for cycle and consistency
+    huber_delta: 0.1                      # squared below, linear above
+    landsat_mtf: ${landsat_mtf}
+    factor: ${factor}

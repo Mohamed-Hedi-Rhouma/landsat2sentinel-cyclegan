@@ -1,0 +1,11 @@
+
+# pixi environments
+.pixi
+*.egg-info
+landsat_gan/
+sentinel2_gan/
+*.tif
+results/
+outputs/
+__pycache__/
+*.pyc

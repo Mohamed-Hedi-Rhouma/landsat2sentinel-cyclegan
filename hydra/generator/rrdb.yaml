@@ -1,0 +1,26 @@
+# @package _global_
+generator:
+  name: 'rrdb'
+  channels: 64                            # feature width
+  growth: 32                              # channels added by each conv of a dense block
+  nb_rrdb: 6                              # rrdb blocks in the body
+
+  l2s:                                    # landsat 128 -> sentinel 384
+    _target_: cyclegan.model.generator.Generator
+    direction: 'up'
+    bands: ${bands}
+    factor: ${factor}
+    channels: ${generator.channels}
+    growth: ${generator.growth}
+    nb_rrdb: ${generator.nb_rrdb}
+    mtf: ${landsat_mtf}                   # not used going up
+
+  s2l:                                    # sentinel 384 -> landsat 128
+    _target_: cyclegan.model.generator.Generator
+    direction: 'down'
+    bands: ${bands}
+    factor: ${factor}
+    channels: ${generator.channels}
+    growth: ${generator.growth}
+    nb_rrdb: ${generator.nb_rrdb}
+    mtf: ${landsat_mtf}                   # base = landsat view of the sentinel input

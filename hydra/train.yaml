@@ -1,0 +1,31 @@
+# @package _global_
+defaults:
+  - _self_
+  - location: local                       # local or kaggle
+  - datamodule: cycle
+  - generator: rrdb
+  - discriminator@d_sentinel: patch       # patch or unet
+  - discriminator@d_landsat: patch        # patch or unet
+  - loss: cycle
+  - training_module: cyclegan
+  - callbacks: default
+  - trainer: default
+  - loggers: default
+  - log_dir: default
+  - optional experiments: null
+
+name: cyclegan_run_1                      # run folder name, unique per run
+seed: 30
+loglevel: INFO
+mat_mul_precision: 'high'                 # faster float32 matmuls on recent gpus
+run_test: false                           # true = test once on the test tiles with best.ckpt after training
+
+# shared by several configs
+bands: 6                                  # blue green red nir swir1 swir2
+factor: 3                                 # 30 m / 10 m
+crop_size: 128                            # landsat crop, sentinel crop is factor times larger
+landsat_mtf: 0.3                          # blur of the landsat view (cesbio value)
+
+hydra:
+  run:
+    dir: ${log_dir}                       # hydra outputs go into the run folder

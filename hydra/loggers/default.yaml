@@ -1,0 +1,7 @@
+# @package _global_
+loggers:
+  tensorboard:
+    _target_: pytorch_lightning.loggers.TensorBoardLogger
+    save_dir: ${log_dir}
+    name: 'tensorboard'
+    version: ''                           # one folder per run, no version_0, version_1

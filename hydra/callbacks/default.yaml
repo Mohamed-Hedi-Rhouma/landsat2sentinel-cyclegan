@@ -1,0 +1,22 @@
+# @package _global_
+callbacks:
+  model_checkpoint:                       # best.ckpt and last.ckpt, both overwritten
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: ${log_dir}/checkpoints
+    filename: 'best'                      # fixed name, replaced by each new best
+    monitor: 'val/l2s_lpips'              # fake sentinel vs real sentinel of the same place
+    mode: 'min'
+    save_top_k: 1                         # only the best
+    save_last: true                       # last.ckpt, used to resume
+    enable_version_counter: false         # overwrite instead of best-v1.ckpt
+  lr_monitor:                             # learning rates in tensorboard
+    _target_: pytorch_lightning.callbacks.LearningRateMonitor
+    logging_interval: 'epoch'
+  figures:                                # 16 val pairs, 4 pngs per composite
+    _target_: cyclegan.callbacks.visualization.TranslationFigures
+    output_dir: ${log_dir}/figures
+    nb_pairs: 16
+    pairs_per_figure: 4
+    every_n_validations: 1
+    error_max: 0.05                       # reflectance error shown as the brightest colour
+    dpi: 120

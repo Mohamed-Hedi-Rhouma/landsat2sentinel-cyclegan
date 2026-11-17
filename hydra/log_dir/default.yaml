@@ -1,0 +1,2 @@
+# @package _global_
+log_dir: ${location.output_dir}/${name}   # one folder per run name

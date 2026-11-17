@@ -1,0 +1,12 @@
+# @package _global_
+trainer:
+  _target_: pytorch_lightning.Trainer
+  default_root_dir: ${log_dir}
+  max_epochs: 100
+  accelerator: 'auto'
+  devices: 1
+  precision: '32-true'
+  check_val_every_n_epoch: 1              # validation, figures and checkpoints every epoch
+  log_every_n_steps: 50
+  num_sanity_val_steps: 2
+  # no gradient_clip_val here: clipping is done in the module (manual optimization)

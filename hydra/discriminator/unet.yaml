@@ -1,0 +1,5 @@
+# used twice from train.yaml: discriminator@d_sentinel and discriminator@d_landsat
+_target_: cyclegan.model.discriminator.UNetDiscriminator
+bands: ${bands}
+channels: 64                              # first layer width
+highpass: false                           # true = judge edges and textures only

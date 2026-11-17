@@ -1,0 +1,9 @@
+# @package _global_
+location:
+  name: 'local'
+  root_dir: '/home/mrhouma/Documents/Cyclegan/cyclegan'      # the repo
+  landsat_root: '/media/mrhouma/2C1E-61AC/landsat_gan'       # download_landsat.py output
+  sentinel_root: '/media/mrhouma/2C1E-61AC/sentinel2_gan'    # download_sentinel.py output
+  stats_dir: ${location.root_dir}/stats                      # stats.py output, in the repo
+  output_dir: ${location.root_dir}/results                   # runs, logs and checkpoints
+  cache_dir: ${location.output_dir}/cache                    # crop clean fractions

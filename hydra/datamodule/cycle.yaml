@@ -1,0 +1,26 @@
+# @package _global_
+datamodule:
+  name: 'cycle'
+  loader:
+    _target_: cyclegan.data.datamodule.CycleDataModule
+    landsat_root: ${location.landsat_root}
+    sentinel_root: ${location.sentinel_root}
+    stats_dir: ${location.stats_dir}
+    cache_dir: ${location.cache_dir}
+
+    # test aois of these tiles are val, the other test aois are test (one or two per region each)
+    val_tiles: [22NBL, 30NUM, 30SWG, 31TCJ, 31UES, 32TPT, 32UMU, 33VWJ, 34TFQ]
+
+    # dates and crops
+    min_clean: 0.5                        # a date needs at least this clean fraction
+    min_crop_clean: 0.9                   # a crop needs at least this clean fraction
+    crop_size: ${crop_size}
+    crops_per_side: 3                     # 3 x 3 crops per image
+    max_pair_days: 5                      # val and test: largest gap between landsat and sentinel
+
+    # train augmentation
+    jitter: 8                             # random shift in landsat pixels, 0 = off
+    augment: true                         # random flips and 90 degree rotations
+
+    batch_size: 4
+    num_workers: 4

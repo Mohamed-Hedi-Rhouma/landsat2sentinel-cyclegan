@@ -1,0 +1,23 @@
+# @package _global_
+training_module:
+  name: 'cyclegan'
+
+  optimization:
+    _target_: cyclegan.model.training_module.OptimizationParameters
+    lr_g: 1.0e-4                          # generators
+    lr_d: 1.0e-4                          # discriminators
+    beta1: 0.5                            # adam, cyclegan standard
+    beta2: 0.999
+    decay_start: 0.5                      # lr constant, then linear to 0 from half of max_epochs
+    grad_clip: 1.0                        # max gradient norm, 0 = off (not in the trainer: manual optimization)
+
+  module:
+    _target_: cyclegan.model.training_module.CycleGANModule
+    g_l2s: ${generator.l2s}
+    g_s2l: ${generator.s2l}
+    d_sentinel: ${d_sentinel}
+    d_landsat: ${d_landsat}
+    loss: ${loss.model}
+    optimization: ${training_module.optimization}
+    pool_size: 50                         # past fakes shown to the discriminators, 0 = off
+    factor: ${factor}

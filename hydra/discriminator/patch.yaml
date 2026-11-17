@@ -1,0 +1,7 @@
+# used twice from train.yaml: discriminator@d_sentinel and discriminator@d_landsat
+_target_: cyclegan.model.discriminator.MultiScaleDiscriminator
+bands: ${bands}
+channels: 64                              # first layer width, doubled at each halving
+nb_down: 3                                # stride-2 convs, about 70 x 70 pixels per score
+nb_scales: 2                              # full image and half size
+highpass: false                           # true = judge edges and textures only
