@@ -35,7 +35,6 @@ class Crop:
     j: int                                       # grid column of the crop
     row: int                                     # top-left pixel row
     col: int                                     # top-left pixel column
-    image_size: int                              # pixels per side of the full image
 
     def info(self) -> str:
         """Short text for logs and figures."""
@@ -98,8 +97,9 @@ def days_between(a: str, b: str) -> int:
 class CycleDataset(torch.utils.data.Dataset):
     """Clean crops of both sensors.
 
-    train: every clean landsat crop once per epoch, with a random clean sentinel crop, jitter and flips.
-    val, test: landsat and sentinel crops of the same aoi and cell, at most max_pair_days apart, no augmentation.
+    train: every clean landsat crop once per epoch, with a random clean sentinel crop.
+    val, test: landsat and sentinel crops of the same aoi and cell, at most max_pair_days apart.
+    No augmentation: crops are always the grid cells, north-up.
     """
 
     def __init__(
@@ -115,8 +115,6 @@ class CycleDataset(torch.utils.data.Dataset):
         crop_size: int = 128,                    # landsat crop, sentinel crop is RATIO times larger
         crops_per_side: int = 3,                 # crop grid per image side
         max_pair_days: int = 5,                  # val and test: largest gap between the two dates
-        jitter: int = 8,                         # train: random landsat shift in pixels around the grid cell
-        augment: bool = True,                    # train: random flips and 90 degree rotations
     ):
         """Index the clean crops of both sensors; no image is read here except the qa bands, once."""
         super().__init__()
@@ -129,8 +127,6 @@ class CycleDataset(torch.utils.data.Dataset):
         self.crops_per_side = crops_per_side
         self.cache_dir = Path(cache_dir)
         self.training = split == "train"
-        self.jitter = jitter if self.training else 0
-        self.augment = augment and self.training
 
         self.stats = {sensor: load_stats(stats_dir, sensor) for sensor in (LANDSAT, SENTINEL)}
         self.landsat_crops = self._index(LANDSAT, landsat_root)
@@ -179,7 +175,7 @@ class CycleDataset(torch.utils.data.Dataset):
             for i, row in enumerate(starts):
                 for j, col in enumerate(starts):
                     if cache[key][i][j] >= self.min_crop_clean:
-                        crops.append(Crop(aoi, date, path, i, j, row, col, image_size))
+                        crops.append(Crop(aoi, date, path, i, j, row, col))
 
         if nb_new:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -212,20 +208,11 @@ class CycleDataset(torch.utils.data.Dataset):
     # -------------------------------------------------------------------------
     # Read
     # -------------------------------------------------------------------------
-    def _shift(self, crop: Crop, size: int, max_shift: int) -> tuple[int, int]:
-        """Top-left pixel of the crop, randomly shifted by up to max_shift and kept inside the image."""
-        if max_shift == 0:
-            return crop.row, crop.col
-        dr, dc = torch.randint(-max_shift, max_shift + 1, (2,)).tolist()
-        limit = crop.image_size - size
-        return min(max(crop.row + dr, 0), limit), min(max(crop.col + dc, 0), limit)
-
     def _read(self, sensor: Sensor, crop: Crop) -> tuple[torch.Tensor, torch.Tensor]:
         """Normalized 6-band crop and its good-pixel mask; bad pixels are 0."""
         scale = RATIO if sensor is SENTINEL else 1
         size = self.crop_size * scale
-        row, col = self._shift(crop, size, self.jitter * scale)
-        window = Window(col, row, size, size)
+        window = Window(crop.col, crop.row, size, size)
 
         bands = []
         for file in BAND_FILES:
@@ -238,15 +225,6 @@ class CycleDataset(torch.utils.data.Dataset):
         image = (torch.from_numpy(sensor.reflectance(np.stack(bands))) - loc) / spread
         mask = torch.from_numpy(good).unsqueeze(0)
         return image * mask, mask
-
-    def _augment(self, image: torch.Tensor, mask: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """Same random flip and 90 degree rotation for an image and its mask."""
-        k = int(torch.randint(0, 4, (1,)))
-        flip = bool(torch.randint(0, 2, (1,)))
-        image, mask = torch.rot90(image, k, (1, 2)), torch.rot90(mask, k, (1, 2))
-        if flip:
-            image, mask = torch.flip(image, (2,)), torch.flip(mask, (2,))
-        return image, mask
 
     # -------------------------------------------------------------------------
     # Items
@@ -265,8 +243,4 @@ class CycleDataset(torch.utils.data.Dataset):
 
         landsat, landsat_mask = self._read(LANDSAT, landsat_crop)
         sentinel, sentinel_mask = self._read(SENTINEL, sentinel_crop)
-        if self.augment:                                           # unpaired, so each crop on its own
-            landsat, landsat_mask = self._augment(landsat, landsat_mask)
-            sentinel, sentinel_mask = self._augment(sentinel, sentinel_mask)
-
         return Sample(landsat, landsat_mask, sentinel, sentinel_mask, landsat_crop.info(), sentinel_crop.info())

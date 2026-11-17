@@ -71,8 +71,6 @@ class CycleDataModule(pl.LightningDataModule):
         crop_size: int = 128,                    # landsat crop, sentinel crop is 3 times larger
         crops_per_side: int = 3,                 # crop grid per image side
         max_pair_days: int = 5,                  # val and test: largest gap between the two dates
-        jitter: int = 8,                         # train: random shift in landsat pixels
-        augment: bool = True,                    # train: random flips and rotations
         batch_size: int = 4,                     # samples per batch
         num_workers: int = 4,                    # loader workers
     ):
@@ -91,8 +89,6 @@ class CycleDataModule(pl.LightningDataModule):
             crop_size=crop_size,
             crops_per_side=crops_per_side,
             max_pair_days=max_pair_days,
-            jitter=jitter,
-            augment=augment,
         )
         self.train_set: CycleDataset | None = None
         self.val_set: CycleDataset | None = None
