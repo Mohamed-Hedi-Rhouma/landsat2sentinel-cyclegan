@@ -18,9 +18,5 @@ datamodule:
     crops_per_side: 3                     # 3 x 3 crops per image
     max_pair_days: 5                      # val and test: largest gap between landsat and sentinel
 
-    # train augmentation
-    jitter: 8                             # random shift in landsat pixels, 0 = off
-    augment: true                         # random flips and 90 degree rotations
-
     batch_size: 4
     num_workers: 4
