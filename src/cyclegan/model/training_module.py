@@ -17,6 +17,17 @@ from cyclegan.model.loss import CycleLoss, Scores, masked_mean
 
 logger = logging.getLogger(__name__)
 
+SUMMARY = (                                      # (logged key, short name) printed after each validation
+    ("train/g", "g"),                            # last train step
+    ("train/d", "d"),
+    ("val/l2s_mae", "l2s mae"),                  # fake sentinel vs real sentinel, raw reflectance
+    ("val/l2s_mae_fit", "l2s mae_fit"),          # same after gain/offset fit: structure only
+    ("val/l2s_lpips", "l2s lpips"),              # checkpoint metric
+    ("val/s2l_mae", "s2l mae"),                  # fake landsat vs real landsat
+    ("val/cycle_l", "cycle l"),                  # round trips
+    ("val/cycle_s", "cycle s"),
+)
+
 
 @dataclass(frozen=True)
 class OptimizationParameters:
@@ -202,3 +213,11 @@ class CycleGANModule(pl.LightningModule):
     def test_step(self, batch: Batch, _batch_idx: int):
         """Paired metrics on the test tiles."""
         self.evaluate(batch, "test")
+
+    def on_validation_end(self):
+        """One summary line per epoch in the log, after the val metrics are averaged."""
+        if self.trainer.sanity_checking:
+            return
+        metrics = self.trainer.callback_metrics
+        parts = [f"{name} {float(metrics[key]):.4f}" for key, name in SUMMARY if key in metrics]
+        logger.info("epoch %3d | %s", self.current_epoch, " | ".join(parts))
