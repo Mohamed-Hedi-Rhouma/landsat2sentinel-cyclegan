@@ -70,7 +70,7 @@ class TranslationFigures(pl.Callback):
 
     def __init__(
         self,
-        output_dir: str,                         # figures/epoch_<epoch>_<composite>_<part>.png
+        output_dir: str,                         # figures/step_<step>_<composite>_<part>.png
         nb_pairs: int = 16,                      # val pairs shown, from different aois
         pairs_per_figure: int = 4,               # pairs in one png, so 16 pairs = 4 pngs per composite
         every_n_validations: int = 1,            # draw every n validations
@@ -122,13 +122,13 @@ class TranslationFigures(pl.Callback):
             return
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        epoch = trainer.current_epoch
+        epoch, step = trainer.current_epoch, trainer.global_step       # several validations per epoch: name by step
         for start in range(0, len(self.indices), self.pairs_per_figure):     # one group of pairs per png
             part = start // self.pairs_per_figure + 1
             rows = self.translate(dataset, pl_module, self.indices[start:start + self.pairs_per_figure])
             for name, bands in COMPOSITES.items():
-                figure = self.draw(rows, name, bands, epoch, part)
-                figure.savefig(self.output_dir / f"epoch_{epoch:03d}_{name}_{part}.png",
+                figure = self.draw(rows, name, bands, epoch, step, part)
+                figure.savefig(self.output_dir / f"step_{step:07d}_{name}_{part}.png",
                                dpi=self.dpi, bbox_inches="tight")
                 for experiment_logger in trainer.loggers:
                     if isinstance(experiment_logger, TensorBoardLogger):
@@ -188,7 +188,8 @@ class TranslationFigures(pl.Callback):
             self.limits[key] = stretch_limits(composite(row["real"], bands), row["real_mask"])
         return self.limits[key]
 
-    def draw(self, rows: list[dict], name: str, bands: tuple[str, ...], epoch: int, part: int) -> plt.Figure:
+    def draw(self, rows: list[dict], name: str, bands: tuple[str, ...], epoch: int, step: int,
+             part: int) -> plt.Figure:
         """One figure: a row per pair and direction, four panels per row."""
         figure, axes = plt.subplots(len(rows), 4, figsize=(16, 4 * len(rows)), squeeze=False)
         error_cmap = plt.get_cmap("magma").copy()
@@ -212,7 +213,7 @@ class TranslationFigures(pl.Callback):
             figure.colorbar(shown, ax=axes_row[3], fraction=0.046, pad=0.04)
             for ax in axes_row:
                 ax.axis("off")
-        figure.suptitle(f"epoch {epoch} | {name}: {' '.join(bands)} | part {part} | "
+        figure.suptitle(f"epoch {epoch} | step {step} | {name}: {' '.join(bands)} | part {part} | "
                         f"magenta = masked | same colour scale per row", fontsize=12)
         figure.tight_layout()
         return figure
