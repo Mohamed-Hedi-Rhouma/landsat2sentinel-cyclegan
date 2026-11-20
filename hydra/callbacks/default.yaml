@@ -9,6 +9,10 @@ callbacks:
     save_top_k: 1                         # only the best
     save_last: true                       # last.ckpt, used to resume
     enable_version_counter: false         # overwrite instead of best-v1.ckpt
+  time_limit:                             # saves last.ckpt and stops before the kaggle 12 h limit
+    _target_: cyclegan.callbacks.time_limit.SessionTimeLimit
+    dirpath: ${log_dir}/checkpoints
+    max_hours: 11.0                       # counted from this session's start
   lr_monitor:                             # learning rates in tensorboard
     _target_: pytorch_lightning.callbacks.LearningRateMonitor
     logging_interval: 'epoch'

@@ -90,6 +90,8 @@ class CycleGANModule(pl.LightningModule):
 
     def on_train_epoch_end(self):
         """Manual optimization: the schedulers are stepped here, once per epoch."""
+        if self.trainer.should_stop:                                 # stopped mid-epoch (time limit): epoch not done
+            return
         for scheduler in self.lr_schedulers():
             scheduler.step()
 
